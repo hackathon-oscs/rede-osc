@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require File.dirname(__FILE__) + '/../config/environment'
+require 'csv'
 include Noosfero::SampleDataHelper
 
 categories = $environment.categories
@@ -13,33 +14,54 @@ def rand_position(type)
   range.first + rand() * amplitude
 end
 
-groups = ['Associação', 'Empresa Solidária', 'Cooperativa']
-what = ['de Produção de Alimentos', 'de Serviços', 'de Artesanato', 'de Comercialização']
-places = ['de Caximbinha do Sul', 'de Bonito', 'de Reviravolta do Serrado']
+# Importa a partir do dejus.formatted.csv 
+# 0 - CodigoEntidade
+# 1 - CodigoSetorEntidade
+# 2 - CodigoTipoEstabelecimento
+# 3 - HabilitaCertidao
+# 4 - OrigemEntidade
+# 5 - OrigemCadastro
+# 6 - CodigoUsuarioResponsavelCadastro
+# 7 - DataAtualizacao
+# 8 - IndicaEntidadeTemporaria
+# 9 - NomeFantasia
+# 10 - RazaoSocial
+# 11 - NomeReduzido
+# 12 - NumeroCNPJ
+# 13 - Site
+# 14 - Email
+# 15 - Logradouro
+# 16 - Complemento
+# 17 - NumeroLogradouro
+# 18 - NomeBairro
+# 19 - NumeroCEP
+# 20 - CodigoMunicipio
+# 21 - SiglaUF
+# 22 - NomeMunicipio
+# 23 - NomeEstado
+# 24 - SiglaPais
+# 25 - NumeroDDD
+# 26 - NumeroTelefone1
+# 27 - NumeroTelefone2
+# 28 - NumeroFax
+# 29 - CodigoNaturezaJuridica
+# 30 - data
+# 31 - DataCriacao
 
 start_time = Time.now
 
-print "Creating enterprises: "
-groups.each do |group|
-  what.each do |production|
-    places.each do |place|
-      name = [group, production, place].join(' ') + " - #{$environment.name}"
-      enterprise = Enterprise.new(
-        :name => name,
-        :identifier => name.to_slug,
+CSV.foreach("dejus.formatted.csv") do |row|
+    enterprise = Enterprise.new(
+        :name => row[10],
+        :identifier => row[10],
         :enabled => false,
-        :foundation_year => (1990..2008).to_a[rand(18)],
-        :lat => rand_position(:lat),
-        :lng => rand_position(:lng)
+        :foundation_year => (1990..2008).to_a[rand(18)]
       )
       save enterprise do
         categories.rand.enterprises << enterprise
         categories.rand.enterprises << enterprise
       end
     end
-  end
-end
-done
 
 EnterpriseActivation.find(:all, :conditions => ['created_at > ?', start_time]).each do |activation|
   enterprise = activation.enterprise
